@@ -1,0 +1,18 @@
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  overflow: hidden;
+  position: fixed; /* Forces it to stay put */
+  top: 0;
+  left: 0;
+}
+
+canvas {
+  touch-action: none; /* Helps with mobile and accidental scrolls */
+}
