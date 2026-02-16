@@ -9,5 +9,20 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+
+    <div id="search-container">
+    <input type="text" id="game-search-input" placeholder="Search by game name...">
+    <button id="search-btn">Find Stats</button>
+    
+    <div id="results-list">
+        </div>
+  </div>
+
+  <script type="module">
+      import { supabase } from './supabaseClient.js'; // Your supabase init file
+      import { initializeSearch } from './search.js';
+      
+      initializeSearch(supabase);
+  </script>
   </body>
 </html>
