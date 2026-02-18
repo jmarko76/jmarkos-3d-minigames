@@ -1,53 +1,100 @@
-// Jmarko's Minigames
-// By Devin Avery
-// A collection of simple 3D minigames built with React and Three.js. 
-// Each game features basic mechanics and controls, for quick  fun. 
-// Games include Treefall, Basketball, and more! 
-// Use the onscreen instructions for each game to get started.
+// FOUR CORNERS 3D GAME
+// BY: DEVIN AVERY
+// Classic 4 corners game BUT in 3d. 
+// The game keeps track of the player's score and resets if they DON'T go to the corner called.
 
-
-import React, { useState } from 'react';
-import Basketball from './Basketball';
-import Treefall from './Treefall';
-import FourCorners from './FourCorners';
-import Jousting from './Jousting';
-import Pong from './Pong';
-
-import './App.css';
-
-const GAMES_LIST = [
-  { id: 'basketball', name: 'Hoop Master', Component: Basketball },
-  { id: 'treefall', name: 'Tree-Fall', Component: Treefall },
-  { id: 'fourcorners', name: 'Four Corners', Component: FourCorners },
-  { id: 'jousting', name: 'Jousting', Component: Jousting },
-  { id: 'pong', name: 'Pong', Component: Pong },
-];
+import React, { useState, useEffect } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { PerspectiveCamera, OrbitControls } from '@react-three/drei';
+import * as THREE from 'three';
 
 export default function App() {
-  // 1. Initialize state with a random index so every refresh is different
-  const [gameIndex, setGameIndex] = useState(() => 
-    Math.floor(Math.random() * GAMES_LIST.length)
-  );
+  const [score, setScore] = useState(0);
+  const [gameActive, setGameActive] = useState(true);
+  const [playerPosition, setPlayerPosition] = useState(0);
+  const [activeCorner, setActiveCorner] = useState(null);
+  const [cornersGlowing, setCornersGlowing] = useState([false, false, false, false]);
 
-  const handleGameComplete = () => {
-    // Moves to the next one in the list (sequential)
-    setGameIndex((prev) => (prev + 1) % GAMES_LIST.length);
+  const corners = [
+    { pos: [-5, 0, -5], index: 0 },
+    { pos: [5, 0, -5], index: 1 },
+    { pos: [-5, 0, 5], index: 2 },
+    { pos: [5, 0, 5], index: 3 },
+  ];
+
+  // core logic for activating corners and checking player position
+  useEffect(() => {
+    if (!gameActive) return;
+
+    const timer = setTimeout(() => {
+      const randomCorner = Math.floor(Math.random() * 4);
+      setActiveCorner(randomCorner);
+
+      const newGlowing = [false, false, false, false];
+      newGlowing[randomCorner] = true;
+      setCornersGlowing(newGlowing);
+
+      setTimeout(() => {
+        if (playerPosition !== randomCorner) {
+          setScore(score + 1);
+          setPlayerPosition(Math.floor(Math.random() * 4));
+        } else {
+          setScore(0);
+          setPlayerPosition(Math.floor(Math.random() * 4));
+        }
+        setCornersGlowing([false, false, false, false]);
+      }, 1000);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [gameActive, playerPosition, score]);
+
+  const handleCornerClick = (index) => {
+    setPlayerPosition(index);
   };
 
-  const ActiveGame = GAMES_LIST[gameIndex].Component;
-
   return (
-    <div className="app-main">
-      <div className="hud-overlay">
-        <h1 className="title">Jmarko's Minigames</h1>
-        <div className="stats">
-          <span>Current Game: {GAMES_LIST[gameIndex].name}</span>
-        </div>
-      </div>
+    <div style={{ width: '100vw', height: '100vh' }}>
+      <Canvas>
+        <PerspectiveCamera position={[0, 8, 12]} fov={50} />
+        <OrbitControls />
+        <ambientLight intensity={0.6} />
+        <pointLight position={[10, 10, 10]} intensity={0.8} />
 
-      <div className="game-container">
-        {/* Use a 'key' here to force React to reset the component fully when index changes */}
-        <ActiveGame key={GAMES_LIST[gameIndex].id} onComplete={handleGameComplete} />
+        {/* Platform Grid */}
+        <mesh position={[0, -1, 0]}>
+          <boxGeometry args={[12, 0.5, 12]} />
+          <meshStandardMaterial color="#444" />
+        </mesh>
+
+        {/* Corner Slabs */}
+        {corners.map((corner) => (
+          <mesh
+            key={corner.index}
+            position={[corner.pos[0], 0.5, corner.pos[2]]}
+            onClick={() => handleCornerClick(corner.index)}
+          >
+            <boxGeometry args={[2, 1, 2]} />
+            <meshStandardMaterial
+              color={
+                playerPosition === corner.index
+                  ? '#0066ff'
+                  : cornersGlowing[corner.index]
+                  ? '#ffff00'
+                  : '#ffffff'
+              }
+              emissive={cornersGlowing[corner.index] ? '#ffff00' : '#000000'}
+              emissiveIntensity={cornersGlowing[corner.index] ? 0.8 : 0}
+            />
+          </mesh>
+        ))}
+      </Canvas>
+
+      <div style={{ position: 'absolute', top: 20, left: 20, color: 'white', fontSize: '24px' }}>
+        Score: {score}
+      </div>
+      <div style={{ position: 'absolute', bottom: 20, left: 20, color: 'white', fontSize: '16px' }}>
+        Click a corner to move. Yellow = called corner. Blue = your position.
       </div>
     </div>
   );
