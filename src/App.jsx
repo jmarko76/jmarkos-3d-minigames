@@ -1,101 +1,137 @@
 // FOUR CORNERS 3D GAME
 // BY: DEVIN AVERY
-// Classic 4 corners game BUT in 3d. 
+// Classic 4 corners game BUT in 3D.
 // The game keeps track of the player's score and resets if they DON'T go to the corner called.
 
-import React, { useState, useEffect } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { PerspectiveCamera, OrbitControls } from '@react-three/drei';
-import * as THREE from 'three';
+import React, { useState, useEffect, useRef } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { PerspectiveCamera, OrbitControls, Text, Float } from '@react-three/drei';
+import { Vector3 } from 'three';
+
+// Ball player 
+function Player({ targetPosition }) {
+  const meshRef = useRef();
+  const currentPos = new Vector3(...targetPosition);
+
+  useFrame((state, delta) => {
+    if (meshRef.current) {
+      // EDIT: Smoother movement using lerp (Linear Interpolation)
+      meshRef.current.position.lerp(new Vector3(targetPosition[0], 1, targetPosition[2]), 0.15);
+    }
+  });
+
+  return (
+    <mesh ref={meshRef} position={[0, 1, 0]}>
+      <sphereGeometry args={[0.5, 32, 32]} />
+      <meshStandardMaterial color="#0066ff" emissive="#002266" />
+    </mesh>
+  );
+}
 
 export default function App() {
   const [score, setScore] = useState(0);
-  const [gameActive, setGameActive] = useState(true);
-  const [playerPosition, setPlayerPosition] = useState(0);
+  const [highScore, setHighScore] = useState(0);
+  const [gameState, setGameState] = useState('START'); 
   const [activeCorner, setActiveCorner] = useState(null);
-  const [cornersGlowing, setCornersGlowing] = useState([false, false, false, false]);
+  const [playerIdx, setPlayerIdx] = useState(0);
+  const [isWarning, setIsWarning] = useState(false);
 
   const corners = [
-    { pos: [-5, 0, -5], index: 0 },
-    { pos: [5, 0, -5], index: 1 },
-    { pos: [-5, 0, 5], index: 2 },
-    { pos: [5, 0, 5], index: 3 },
+    { pos: [-5, 0, -5], color: '#ff4444' }, // Red
+    { pos: [5, 0, -5], color: '#44ff44' },  // Green
+    { pos: [-5, 0, 5], color: '#ffbb00' },  // Orange
+    { pos: [5, 0, 5], color: '#ff44ff' },   // Purple
   ];
 
-  // core logic for activating corners and checking player position
+  // EDIT: Dynamic Difficulty Logic
+  const gameSpeed = Math.max(600, 2000 - (score * 150));
+
   useEffect(() => {
-    if (!gameActive) return;
+    if (gameState !== 'PLAYING') return;
 
     const timer = setTimeout(() => {
       const randomCorner = Math.floor(Math.random() * 4);
       setActiveCorner(randomCorner);
+      setIsWarning(true);
 
-      const newGlowing = [false, false, false, false];
-      newGlowing[randomCorner] = true;
-      setCornersGlowing(newGlowing);
-
+      // Reaction Window
       setTimeout(() => {
-        if (playerPosition !== randomCorner) {
-          setScore(score + 1);
-          setPlayerPosition(Math.floor(Math.random() * 4));
+        // DELETE: Random teleporting (Player stays where they clicked)
+        // EDIT: Win condition (Must NOT be in the "called" corner)
+        if (playerIdx === randomCorner) {
+          setGameState('GAMEOVER');
         } else {
-          setScore(0);
-          setPlayerPosition(Math.floor(Math.random() * 4));
+          setScore(s => s + 1);
+          setIsWarning(false);
+          setActiveCorner(null);
         }
-        setCornersGlowing([false, false, false, false]);
-      }, 1000);
-    }, 2000);
+      }, gameSpeed);
+    }, 1500);
 
     return () => clearTimeout(timer);
-  }, [gameActive, playerPosition, score]);
+  }, [gameState, playerIdx, score, gameSpeed]);
 
-  const handleCornerClick = (index) => {
-    setPlayerPosition(index);
+  const startGame = () => {
+    setScore(0);
+    setGameState('PLAYING');
   };
 
   return (
-    <div style={{ width: '100vw', height: '100vh' }}>
-      <Canvas>
-        <PerspectiveCamera position={[0, 8, 12]} fov={50} />
-        <OrbitControls />
-        <ambientLight intensity={0.6} />
-        <pointLight position={[10, 10, 10]} intensity={0.8} />
+    <div style={{ width: '100vw', height: '100vh', background: '#111' }}>
+      <Canvas shadows>
+        <PerspectiveCamera makeDefault position={[0, 10, 15]} />
+        <OrbitControls enablePan={false} maxPolarAngle={Math.PI / 2.1} />
+        <ambientLight intensity={0.5} />
+        <pointLight position={[10, 10, 10]} intensity={1} />
 
-        {/* Platform Grid */}
-        <mesh position={[0, -1, 0]}>
-          <boxGeometry args={[12, 0.5, 12]} />
-          <meshStandardMaterial color="#444" />
+        {/* The Floor */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.1, 0]}>
+          <planeGeometry args={[20, 20]} />
+          <meshStandardMaterial color="#222" />
         </mesh>
 
+        {/* Player Avatar with Smooth Movement */}
+        <Player targetPosition={corners[playerIdx].pos} />
+
         {/* Corner Slabs */}
-        {corners.map((corner) => (
-          <mesh
-            key={corner.index}
-            position={[corner.pos[0], 0.5, corner.pos[2]]}
-            onClick={() => handleCornerClick(corner.index)}
+        {corners.map((corner, i) => (
+          <mesh 
+            key={i} 
+            position={[corner.pos[0], 0.25, corner.pos[2]]}
+            onClick={() => setPlayerIdx(i)}
           >
-            <boxGeometry args={[2, 1, 2]} />
-            <meshStandardMaterial
-              color={
-                playerPosition === corner.index
-                  ? '#0066ff'
-                  : cornersGlowing[corner.index]
-                  ? '#ffff00'
-                  : '#ffffff'
-              }
-              emissive={cornersGlowing[corner.index] ? '#ffff00' : '#000000'}
-              emissiveIntensity={cornersGlowing[corner.index] ? 0.8 : 0}
+            <boxGeometry args={[3, 0.5, 3]} />
+            <meshStandardMaterial 
+              color={corner.color}
+              emissive={activeCorner === i && isWarning ? corner.color : '#000'}
+              emissiveIntensity={isWarning ? 2 : 0}
+              transparent
+              opacity={activeCorner === i && isWarning ? 1 : 0.6}
             />
           </mesh>
         ))}
+
+        {/* 3D GAME OVER Message */}
+        {gameState === 'GAMEOVER' && (
+          <Float speed={2} rotationIntensity={0.5}>
+            <Text position={[0, 5, 0]} fontSize={1} color="white">GAME OVER</Text>
+          </Float>
+        )}
       </Canvas>
 
-      <div style={{ position: 'absolute', top: 20, left: 20, color: 'white', fontSize: '24px' }}>
-        Score: {score}
-      </div>
-      <div style={{ position: 'absolute', bottom: 20, left: 20, color: 'white', fontSize: '16px' }}>
-        Click a corner to move. Yellow = called corner. Blue = your position.
+      {/* Start game/try again button*/}
+      <div style={uiOverlayStyle}>
+        <h1>Score: {score}</h1>
+        {gameState !== 'PLAYING' && (
+          <button onClick={startGame} style={buttonStyle}>
+            {gameState === 'START' ? 'START GAME' : 'TRY AGAIN'}
+          </button>
+        )}
       </div>
     </div>
   );
 }
+
+// Additonal Styling
+const uiOverlayStyle = { position: 'absolute', top: 20, left: 20, color: 'white', pointerEvents: 'none' };
+const buttonStyle = { pointerEvents: 'auto', padding: '10px 20px', fontSize: '20px', cursor: 'pointer' };
