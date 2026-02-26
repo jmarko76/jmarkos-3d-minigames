@@ -1,16 +1,15 @@
-# React + Vite
+# Four Corners 3D
+A classic playground game in 3D using React, Three.js, and R3F (React Three Fiber).
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 🕹️ How to Play
+1. Click the **Start** button.
+2. Watch for the corners to flash.
+3. **Move your player** (the blue sphere) to any corner **except** the one that is flashing.
+4. If you are caught in the "active" corner when the timer hits zero, it's Game Over!
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🛠️ Tech Stack
+* **React** - UI Logic
+* **Three.js / React-Three-Fiber** - 3D Rendering
+* **Netlify** - Hosting
+* **NO NEED TO INSTALL ANY LOCAL DEPENDENCIES/PACKAGES**
+* **Click this link to play** - https://app.netlify.com/projects/daverys-four-corners-3d-game/overview.netlify.app
