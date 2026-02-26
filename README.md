@@ -12,4 +12,4 @@ A classic playground game in 3D using React, Three.js, and R3F (React Three Fibe
 * **Three.js / React-Three-Fiber** - 3D Rendering
 * **Netlify** - Hosting
 * **NO NEED TO INSTALL ANY LOCAL DEPENDENCIES/PACKAGES**
-* **Click this link to play** - https://app.netlify.com/projects/daverys-four-corners-3d-game/overview.netlify.app
+* **Click this link to play** - https://daverys-four-corners-3d-game.netlify.app
